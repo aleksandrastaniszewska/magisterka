@@ -152,7 +152,7 @@ def process(mat_files):
 
                                 plot_fft(signal_ssvep, f"FFT - Oz, raw, {file[-8:-4]}, target - {target}", target)
                                 plot_fft(final_signal, f"FFT - Oz, {file[-8:-4]}, target - {target}", target)
-                                check_freq(signal_ssvep, filtered_signal, final_signal)
+                                #check_freq(signal_ssvep, filtered_signal, final_signal)
 
 
 
