@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import (
     butter,
     filtfilt,
-    iirnotch
+    iirnotch,
+    detrend
 )
 import requests
 import zipfile
@@ -45,6 +46,9 @@ def signal_filter(signal, min, max, type):
     filtered_signal = filtfilt(b_band, a_band, signal)
     return filtered_signal
 
+def notch_filter(signal, freq=50, Q=30):
+    b_notch, a_notch = iirnotch(freq, Q, fs=fs)
+    return filtfilt(b_notch, a_notch, signal)
 
 def plot_signal(signal, title):
     time = np.arange(len(signal)) / fs
@@ -60,7 +64,8 @@ def plot_signal(signal, title):
 
 def plot_fft(signal, title, target=None):
 
-    signal = signal - np.mean(signal)
+    #signal = signal - np.mean(signal)
+    signal = detrend(signal)
     window = np.hanning(len(signal))
     fft_vals = np.fft.rfft(signal * window)
     power = np.abs(fft_vals)
@@ -101,11 +106,30 @@ def plot_fft(signal, title, target=None):
     plt.grid(True)
     plt.legend()
     plt.show()
+
+def check_freq(signal_ssvep, filtered_signal, final_signal):
+    freqs = np.fft.rfftfreq(len(signal_ssvep), 1/fs)
+
+    window = np.hanning(len(signal_ssvep))
+
+    fft_before   = np.abs(np.fft.rfft(detrend(signal_ssvep)   * window))
+    fft_filtered = np.abs(np.fft.rfft(detrend(filtered_signal) * window))
+    fft_after    = np.abs(np.fft.rfft(detrend(final_signal)    * window))
+
+    for i in range(0, 255, 5):
+        print(
+        f"{freqs[i]:.2f} Hz | "
+        f"before={fft_before[i]:.1f} | "
+        f"filtered={fft_filtered[i]:.1f} | "
+        f"after={fft_after[i]:.1f}"
+        )
+
+
                 
 def process(mat_files):
     for file in mat_files:
         mat = sio.loadmat(file)
-        if 'data' in mat and file[-8:-4] in ('S035'):
+        if 'data' in mat and file[-8:-4] in ('S004','S035'):#('S004', 'S018', 'S023', 'S025', 'S035'):
             EEG = mat['data']
             for electrode_type in range(2):
                 for block in range(10):
@@ -113,18 +137,24 @@ def process(mat_files):
                         trial = EEG[:, :, electrode_type, block, target]
                         for channel in range(8):
                             if electrode_type == 0 and block == 1 and channel == 5 and target == 2:
-                                signal = trial[channel]
-                                start = 50
+                                signal = trial[channel]  
+                                start = 160
                                 end   = 660
-                                signal_ssvep = signal[start:end]
-                                    #0.00 - 0.50 s    przed stymulacją
-                                    #0.50 - 0.64 s    opóźnienie wzrokowe
-                                    #0.64 - 2.64 s    właściwa stymulacja SSVEP (2 s)
-                                    #2.64 - 2.84 s    po stymulacji
+
+                                signal_full   = detrend(signal) # usunięcie artefaktów funkcji filtrowania??
+                                filtered_full = signal_filter(signal_full, 6, 50, 'bandpass')
+                                #final_full    = signal_filter(filtered_full, 49, 50, 'bandstop')
+                                final_full = notch_filter(filtered_full, 50)
+
+                                signal_ssvep    = signal_full[start:end]
+                                filtered_signal = filtered_full[start:end]
+                                final_signal    = final_full[start:end]
+
                                 plot_fft(signal_ssvep, f"FFT - Oz, raw, {file[-8:-4]}, target - {target}", target)
-                                filtered_signal = signal_filter(signal_ssvep, 6, 50, 'bandpass')
-                                final_signal = signal_filter(filtered_signal, 48, 52, 'bandstop')
                                 plot_fft(final_signal, f"FFT - Oz, {file[-8:-4]}, target - {target}", target)
+                                check_freq(signal_ssvep, filtered_signal, final_signal)
+
+
 
             
 readfile()
