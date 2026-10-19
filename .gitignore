@@ -1,0 +1,4 @@
+.venv/
+__pycache__/
+filtered_data/
+przyklady_test/
