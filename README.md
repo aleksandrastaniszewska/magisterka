@@ -42,23 +42,3 @@ Katalog `filtered_data/` można odtworzyć z oryginalnych danych, uruchamiając 
 ## Badanie źródłowe
 
 Dane zostały udostępnione w ramach badania [An Open Dataset for Wearable SSVEP Based Brain Computer Interfaces](https://doi.org/10.6084/m9.figshare.13560281). Szczegóły protokołu eksperymentu i rozmieszczenia elektrod opisano również w publikacji [Zhu i in. (2021)](https://doi.org/10.3390/s21041256).
-
-## Wyniki analizy przefiltrowanych danych
-
-Została przeanalizowana cała zawartość katalogu `filtered_data/` (102 pliki odpowiadające osobom badanym).
-
-Metryka użyta do detekcji SSVEP polegała na obliczeniu FFT dla każdej próby i każdej elektrody. Amplitudę w pobliżu częstotliwości docelowej porównywano z lokalnym poziomem tła. Odpowiedź dla danej próby i elektrody uznawano za wykrytą, gdy stosunek amplitudy do lokalnego tła przekraczał 2.0.
-
-## Uwagi techniczne
-
-Dane zapisano w formacie MATLAB `.mat`, do którego odczytu służy biblioteka `scipy.io`. W kodzie znajdują się funkcje eksperymentalne i diagnostyczne do badania pojedynczych prób oraz elektrod. Projekt jest na etapie analizy eksperymentalnej i walidacji metody.
-
-## Cele pracy
-
-Celem pracy jest klasyfikacja intencji wzrokowej, reprezentowanej przez jeden z 12 celów bodźca SSVEP, na podstawie sygnału EEG. W ramach pracy planowane jest przygotowanie i porównanie wybranych sieci neuronowych dla sygnałów EEG oraz ich reprezentacji cechowych. Analiza obejmie także wpływ wyboru kanałów, bloków i sposobu przetwarzania na skuteczność klasyfikacji. Ważnym zagadnieniem będzie sprawdzenie, czy wytrenowany model potrafi uogólniać wyniki na osoby niewykorzystane podczas treningu.
-
-## Planowane modele i ewaluacja
-
-Jako punkt odniesienia można wykorzystać klasyfikator oparty na cechach widmowych lub CCA, a następnie porównać jego wyniki z wybranymi sieciami neuronowymi. Rozważane są wielowarstwowy perceptron MLP przyjmujący cechy jako dane wejściowe oraz jednowymiarowa sieć konwolucyjna uczona na fragmentach sygnału EEG. Porównane mogą zostać również modele wykorzystujące pojedyncze kanały oraz modele wielokanałowe.
-
-Ostateczny wybór modeli i konfiguracji będzie zależał od wyników eksperymentów. Skuteczność należy oceniać co najmniej za pomocą dokładności, zrównoważonej dokładności oraz makro uśrednionego wyniku F1. Macierz pomyłek pomoże wskazać, które cele są najczęściej mylone. Podział treningowy i testowy powinien być wykonany według uczestników, tak aby próbki tej samej osoby nie trafiały jednocześnie do obu zbiorów. Pozwoli to rzetelniej ocenić działanie modelu dla nowych uczestników.
