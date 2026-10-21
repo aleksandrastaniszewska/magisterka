@@ -2,3 +2,5 @@
 __pycache__/
 filtered_data/
 przyklady_test/
+models/
+results/

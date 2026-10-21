@@ -4,7 +4,7 @@ Projekt poświęcony analizie sygnałów EEG i klasyfikacji intencji wzrokowej z
 
 ## Struktura repozytorium
 
-Plik `main.py` zawiera główny skrypt analizy danych, a katalog `data/` przechowuje oryginalne pliki `.mat` z eksperymentu. Katalogi `filtered_data/` oraz `przyklady_test/` zawierają lokalnie utworzone dane po filtracji i wizualizacje. Są pomijane przez Git i nie są częścią repozytorium.
+`main.py` i `README.md` znajdują się w głównym folderze projektu. Folder `src/` zawiera moduły `config.py` (konfiguracja), `preprocessing.py` (odczyt i filtracja danych), `cca.py` (metoda odniesienia CCA), `dataset.py` (przygotowanie zbiorów danych), `model.py` (architektura sieci), `train.py` (trenowanie) i `evaluate.py` (ewaluacja). Folder `online/` zawiera moduły `stream.py` (strumieniowe przetwarzanie sygnału), `decoder.py` (dekodowanie wyników) i `gui.py` (interfejs graficzny). Foldery `src/` i `online/` są pakietami Pythona. Katalog `data/` przechowuje oryginalne pliki `.mat` z eksperymentu. Katalogi `filtered_data/` oraz `przyklady_test/` zawierają lokalnie utworzone dane po filtracji i wizualizacje. Są pomijane przez Git i nie są częścią repozytorium.
 
 ## Opis danych
 
@@ -25,7 +25,7 @@ Osiem kanałów rejestrujących EEG znajduje się nad obszarami ciemieniowym i p
     a indeks 7 to O2.
 Jest to kolejność kanałów użyta w opublikowanym zestawie danych.
 
-Opaska mokra i opaska sucha oznaczają dwa warianty rejestracji, a nie dodatkowe kanały EEG. W oryginalnym zestawie indeks wariantu 1 oznacza opaskę mokrą, a indeks 2 opaskę suchą. W Pythonie odpowiadają im indeksy 0 i 1.
+Opaska mokra i opaska sucha oznaczają dwa warianty rejestracji, a nie dodatkowe kanały EEG. W oryginalnym zestawie indeks wariantu 1 oznacza opaskę mokrą, a indeks 2 opaskę suchą. W Pythonie indeks 0 oznacza opaskę suchą, a indeks 1 mokrą.
 
 ## Krótki opis eksperymentu
 
@@ -35,7 +35,7 @@ W każdej próbie czerwony kwadrat, czyli wskazówka cue, oznaczał znak, na kt�
 
 ## Pipeline przetwarzania
 
-Funkcja `filter` w `main.py` realizuje usuwanie trendu, filtrację pasmową w zakresie od 6 do 50 Hz oraz filtrację notch 50 Hz, a następnie wycina okno próby. Jej wywołanie jest obecnie wyłączone. Domyślnie skrypt oczekuje gotowych plików w katalogu `filtered_data/`, oblicza dla każdej próby 12 wyników CCA i zwraca je w tablicy `x_features` razem z etykietami `y_labels` oraz identyfikatorami `subject_ids`. Wyniki pozostają w pamięci i nie są zapisywane do pliku. Diagnostyczne wykresy FFT także są obecnie wyłączone.
+Funkcja `filter` w `preprocessing.py` realizuje usuwanie trendu, filtrację pasmową w zakresie od 6 do 50 Hz oraz filtrację notch 50 Hz, a następnie wycina okno próby. Jej wywołanie jest obecnie wyłączone. Domyślnie skrypt oczekuje gotowych plików w katalogu `filtered_data/`, oblicza w `cca.py` dla każdej próby 12 wyników CCA i zwraca je w tablicy `x_features` razem z etykietami `y_labels` oraz identyfikatorami `subject_ids`. Wyniki pozostają w pamięci i nie są zapisywane do pliku. Diagnostyczne wykresy FFT także są obecnie wyłączone.
 
 Katalog `filtered_data/` można odtworzyć z oryginalnych danych, uruchamiając funkcję `filter`. Uwaga: funkcja ta najpierw usuwa istniejący katalog `filtered_data/`, a następnie zapisuje w nim nowe wyniki.
 
