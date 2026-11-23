@@ -7,6 +7,8 @@ mat_files_raw = []
 mat_files_filtered = []
 n_harmonics = 3 #ile harmonicznych uwzględniamy w referencji
 fs = 250 #w pracy napisali, że zdownsamplowali do 250Hz
+# dataset.npz: global std X: sucha (headband 0) 42.4967, mokra (1) 10.4376;
+# średnia std na próbę/kanał: sucha 10.9337, mokra 9.7329.
 
 target_freq = {
     0:9.25,

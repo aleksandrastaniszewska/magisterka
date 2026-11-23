@@ -4,7 +4,7 @@ Projekt poświęcony analizie sygnałów EEG i klasyfikacji intencji wzrokowej z
 
 ## Struktura repozytorium
 
-`main.py` i `README.md` znajdują się w głównym folderze projektu. Folder `src/` zawiera moduły `config.py` (konfiguracja), `preprocessing.py` (odczyt i filtracja danych), `cca.py` (metoda odniesienia CCA), `dataset.py` (przygotowanie zbiorów danych), `model.py` (architektura sieci), `train.py` (trenowanie) i `evaluate.py` (ewaluacja). Folder `online/` zawiera moduły `stream.py` (strumieniowe przetwarzanie sygnału), `decoder.py` (dekodowanie wyników) i `gui.py` (interfejs graficzny). Foldery `src/` i `online/` są pakietami Pythona. Katalog `data/` przechowuje oryginalne pliki `.mat` z eksperymentu. Katalogi `filtered_data/` oraz `przyklady_test/` zawierają lokalnie utworzone dane po filtracji i wizualizacje. Są pomijane przez Git i nie są częścią repozytorium.
+`main.py` i `README.md` znajdują się w głównym folderze projektu. Folder `src/` zawiera moduły `config.py` (konfiguracja), `preprocessing.py` (odczyt i filtracja danych), `cca.py` (metoda odniesienia CCA), `dataset.py` (przygotowanie zbiorów danych), `plots.py` (wykresy wyników i diagnostyczne FFT), `model.py` (architektura sieci), `train.py` (trenowanie) i `evaluate.py` (ewaluacja). Folder `online/` zawiera moduły `stream.py` (strumieniowe przetwarzanie sygnału), `decoder.py` (dekodowanie wyników) i `gui.py` (interfejs graficzny). Foldery `src/` i `online/` są pakietami Pythona. Katalog `data/` przechowuje oryginalne pliki `.mat` z eksperymentu. Katalogi `filtered_data/` oraz `przyklady_test/` zawierają lokalnie utworzone dane po filtracji i wizualizacje. Są pomijane przez Git i nie są częścią repozytorium.
 
 ## Opis danych
 
@@ -35,7 +35,23 @@ W każdej próbie czerwony kwadrat, czyli wskazówka cue, oznaczał znak, na kt�
 
 ## Pipeline przetwarzania
 
-Funkcja `filter` w `preprocessing.py` realizuje usuwanie trendu, filtrację pasmową w zakresie od 6 do 50 Hz oraz filtrację notch 50 Hz, a następnie wycina okno próby. Jej wywołanie jest obecnie wyłączone. Domyślnie skrypt oczekuje gotowych plików w katalogu `filtered_data/`, oblicza w `cca.py` dla każdej próby 12 wyników CCA i zwraca je w tablicy `x_features` razem z etykietami `y_labels` oraz identyfikatorami `subject_ids`. Wyniki pozostają w pamięci i nie są zapisywane do pliku. Diagnostyczne wykresy FFT także są obecnie wyłączone.
+Funkcja `filter` w `preprocessing.py` realizuje filtrację sygnałów, a gotowe próby są zapisywane do `filtered_data/`. Uruchomienie `main.py` pokazuje menu pozwalające wybrać metody, okna czasowe, same wykresy lub pełne przeliczenie. Wyniki trafiają do `results/baselines.csv`, a wykresy do `results/figures/`. Opaska 0 oznacza suchą, a opaska 1 mokrą. ITR obliczane jest ze wzoru Wolpawa przy czasie wyboru równym długości okna plus 0,5 s przerwy na przeniesienie wzroku.
+
+### Uruchamianie ewaluacji
+
+Uruchom `main.py` z katalogu projektu:
+
+```powershell
+.\.venv\Scripts\python.exe main.py
+```
+
+Program najpierw pyta o zakres osób: jedna wybrana osoba, osoby skrajne albo wszystkie osoby (`all`). Następnie wybierz metody (`1` = CCA, `2` = FBCCA, `3` = TRCA, `4` = eTRCA; można wpisać kilka, np. `1,3`, albo `5` / `all`) oraz okna (np. `0.25,1` albo `all`). Na końcu można zdecydować, czy generować wykresy. Dla wszystkich osób powstają wykresy zbiorcze (opcja `all` nigdy nie tworzy osobnego zestawu dla każdej osoby), dla jednej osoby wykresy tej osoby, a dla zakresu ekstremów trzy zbiorcze wykresy dla wybranych skrajnych osób. Przy częściowym wyborze wykresy ograniczają się do wybranych metod i okien. Diagnostyczne widma FFT kanału Oz dla celu 0 są zapisywane automatycznie dla mokrej i suchej opaski; korzystają z przefiltrowanych prób `dataset.npz`. Wyniki częściowych przeliczeń zastępują tylko odpowiadające im wiersze CSV, zachowując pozostałe wcześniej policzone dane.
+
+### Kontrola i interaktywne wyniki odniesienia
+
+W `main.py` można ustawić `RUN_CHECKS = True`, aby sprawdzić kompletność i powtarzalność wyników, zapisać tabele podsumowujące i statystyczne, zweryfikować wykresy oraz utworzyć raport `results/RAPORT_wyniki_odniesienia.md`. Kontrola spadku trafności przy dłuższym oknie na suchej opasce jest oznaczana jako ostrzeżenie (WARN), nie błąd. Ustawienie `RUN_INTERACTIVE = True` uruchamia samo generowanie samodzielnego pliku `results/figures/wyniki_interaktywne.html`. Wykresy korzystają z lokalnie osadzonych danych Plotly, więc HTML otwiera się w przeglądarce bez uruchomionego Pythona.
+
+Do raportu statystycznego i wykresów interaktywnych wymagane są pakiety `statsmodels` i `plotly`. Jeśli nie są dostępne w używanym środowisku, zainstaluj je poleceniem `python -m pip install statsmodels plotly`.
 
 Katalog `filtered_data/` można odtworzyć z oryginalnych danych, uruchamiając funkcję `filter`. Uwaga: funkcja ta najpierw usuwa istniejący katalog `filtered_data/`, a następnie zapisuje w nim nowe wyniki.
 

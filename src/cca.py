@@ -1,11 +1,68 @@
 # Metoda odniesienia służąca wyłącznie do porównania wyników z siecią; nie jest wejściem do sieci.
 import os
+from functools import lru_cache
 
 import numpy as np
 import scipy.io as sio
 from sklearn.cross_decomposition import CCA
 
 from .config import fs, n_harmonics, target_freq
+
+
+@lru_cache(maxsize=256)
+def _reference_basis(freq, n_samples, sampling_rate, harmonics):
+    t = np.arange(n_samples) / sampling_rate
+    columns = []
+    for harmonic in range(1, harmonics + 1):
+        columns.extend(
+            (
+                np.sin(2 * np.pi * harmonic * freq * t),
+                np.cos(2 * np.pi * harmonic * freq * t),
+            )
+        )
+    reference = np.column_stack(columns)
+    reference -= reference.mean(axis=0, keepdims=True)
+    return np.linalg.qr(reference, mode="reduced")[0]
+
+
+def _frequency_values(freqs):
+    if hasattr(freqs, "values"):
+        return [freqs[key] for key in sorted(freqs)]
+    return list(freqs)
+
+
+def cca_scores(X, freqs, fs, n_harmonics=3):
+    """Return the largest canonical correlation per trial and target."""
+    X = np.asarray(X)
+    if X.ndim != 3:
+        raise ValueError("X must have shape (trials, channels, samples)")
+    if n_harmonics < 1:
+        raise ValueError("n_harmonics must be at least 1")
+    frequencies = _frequency_values(freqs)
+    if not frequencies:
+        raise ValueError("freqs must contain at least one target frequency")
+
+    signals = X.transpose(0, 2, 1)
+    signals = signals - signals.mean(axis=1, keepdims=True)
+    signal_basis = np.linalg.qr(signals, mode="reduced")[0]
+    scores = np.empty((X.shape[0], len(frequencies)), dtype=float)
+
+    for target, freq in enumerate(frequencies):
+        reference_basis = _reference_basis(
+            float(freq), X.shape[-1], float(fs), int(n_harmonics)
+        )
+        cross_basis = np.einsum(
+            "ntc,tk->nck", signal_basis, reference_basis, optimize=True
+        )
+        scores[:, target] = np.linalg.svd(
+            cross_basis, compute_uv=False
+        )[:, 0]
+    return np.clip(scores, 0.0, 1.0)
+
+
+def cca_predict(X, freqs, fs, n_harmonics=3):
+    """Return the highest-scoring target index for each trial."""
+    return np.argmax(cca_scores(X, freqs, fs, n_harmonics), axis=1)
 
 
 # Tworzy sinusoidalne i cosinusoidalne sygnały referencyjne dla częstotliwości i harmonicznych.

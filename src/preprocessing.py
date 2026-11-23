@@ -6,7 +6,7 @@ import numpy as np
 import scipy.io as sio
 from scipy.signal import butter, detrend, filtfilt, iirnotch
 
-from .config import current_dir, fs, path_filtered, target_freq
+from .config import current_dir, fs, path_filtered
 
 
 # Zbiera ścieżki do plików MAT z podanego katalogu i dopisuje je do listy.
@@ -39,70 +39,6 @@ def plot_signal(signal, title):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
-# Rysuje widmo FFT sygnału i opcjonalnie zaznacza częstotliwość targetu oraz harmoniczne.
-def plot_fft(signal, title, target=None):
-
-    #signal = signal - np.mean(signal)
-    signal = detrend(signal)
-    window = np.hanning(len(signal))
-    fft_vals = np.fft.rfft(signal * window)
-    power = np.abs(fft_vals)
-
-    frequencies = np.fft.rfftfreq(
-        len(signal),
-        d=1/fs
-    )
-
-    plt.figure(figsize=(12, 5))
-    plt.plot(frequencies, power)
-
-    if target is not None:
-        expected = target_freq[target]
-        plt.axvline(
-            expected,
-            linestyle='--',
-            label=f'Expected: {expected} Hz'
-        )
-
-        plt.axvline(
-            2 * expected,
-            linestyle=':',
-            label=f'2F={2*expected:.2f} Hz'
-        )
-
-        plt.axvline(
-            3 * expected,
-            linestyle=':',
-            label=f'3F={3*expected:.2f} Hz'
-        )
-
-    plt.xlim(0, 60)
-    plt.xticks(np.arange(0, 61, 5))
-    plt.xlabel("Częstotliwość [Hz]")
-    plt.ylabel("Amplituda")
-    plt.title(title)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
-
-# Wypisuje porównanie widm przed filtracją, po filtrze pasmowym i po filtrze notch.
-def check_freq(signal_ssvep, filtered_signal, final_signal):
-    freqs = np.fft.rfftfreq(len(signal_ssvep), 1/fs)
-
-    window = np.hanning(len(signal_ssvep))
-
-    fft_before = np.abs(np.fft.rfft(detrend(signal_ssvep) * window))
-    fft_filtered = np.abs(np.fft.rfft(detrend(filtered_signal) * window))
-    fft_after = np.abs(np.fft.rfft(detrend(final_signal) * window))
-
-    for i in range(0, 255, 5):
-        print(
-        f"{freqs[i]:.2f} Hz | "
-        f"before={fft_before[i]:.1f} | "
-        f"filtered={fft_filtered[i]:.1f} | "
-        f"after={fft_after[i]:.1f}"
-        )
 
 # Zapisuje przefiltrowane dane EEG w pliku MAT o tej samej nazwie.
 def save_filtered_file(file, EEG):
@@ -141,16 +77,5 @@ def filter(mat_files):
                                 #final_full    = signal_filter(filtered_full, 49, 50, 'bandstop')
                                 final_full = notch_filter(filtered_full, 50)
 
-                                #signal_ssvep    = signal_full[start:end]
-                                #filtered_signal = filtered_full[start:end]
-                                #final_signal    = final_full[start:end]
-
-                                #plot_fft(signal_ssvep, f"FFT - Oz, raw, {file[-8:-4]}, target - {target}", target)
-                                #plot_fft(final_signal, f"FFT - Oz, {file[-8:-4]}, target - {target}", target)
-                                #check_freq(signal_ssvep, filtered_signal, final_signal)
-
-                                #plot_fft(signal, "RAW - przed filtrem", target)
-                                #plot_fft(final_full, "PO filtrze - w tej samej pętli", target)
-                                #plot_fft(final_full[160:660], "PO filtrze - okno ssvep", target)
                                 EEG_filtered[channel, :, electrode_type, block, target] = final_full[start:end]
             save_filtered_file(file, EEG_filtered)
